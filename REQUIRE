@@ -1,1 +1,2 @@
 julia 0.6
+PolynomialRings # Pkg.clone("https://github.com/tkluck/PolynomialRings.jl")
