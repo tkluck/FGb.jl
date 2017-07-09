@@ -12,3 +12,6 @@ cd(@__DIR__) do
     run(`gcc -m64 -c -fPIC dummy-hooks.c`)
     run(`g++ -m64 -shared -o libfgb.so dummy-hooks.o -L$(LIBDIR) -Wl,-zmuldefs -Wl,--whole-archive -lfgb -lfgbexp -lgb -lgbexp -lminpoly -lminpolyvgf -Wl,--no-whole-archive -lgmp -lm -fopenmp`)
 end
+if nothing == try Pkg.installed("PolynomialRings") end
+    Pkg.clone("https://github.com/tkluck/PolynomialRings.jl")
+end
