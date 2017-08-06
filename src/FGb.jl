@@ -87,8 +87,7 @@ function FGb_with(f::Function, ::Type{NP}) where NP<:NamedPolynomial
     init(1,1,0,log_file_handle)
 
     reset_coeffs(1)
-    T = names(NP)
-    varnames = [String(fieldtype(T, i)) for i in 1:nfields(T)]
+    varnames = [String(var) for var in names(NP)]
 
     reset_expos(length(varnames), 0, varnames)
 
