@@ -3,10 +3,9 @@ module FGb
 export FGb_with, groebner
 
 using PolynomialRings
-using PolynomialRings: construct_monomial
+using PolynomialRings: construct_monomial, variablesymbols
 using PolynomialRings.Polynomials: terms
 using PolynomialRings.Terms: coefficient, monomial
-using PolynomialRings.NamedPolynomials: names
 
 libfgb_handle = Libdl.dlopen(joinpath(@__DIR__, "..", "deps","libfgb.so"))
 macro libfgb(symbol)
@@ -71,13 +70,13 @@ export_poly_INT_gmp2(n_variables, n_terms, coefficients, exponents, p) = ccall(@
 reset_memory() = ccall(@libfgb(FGb_int_reset_memory), Void, ())
 exit_INT() = ccall(@libfgb(FGb_int_exit_INT), Void, ())
 
-struct FGbPolynomial{T<:NamedPolynomial}
+struct FGbPolynomial{T<:Polynomial}
     p::Ptr{Void}
 end
 
 in_FGb = false
 
-function FGb_with(f::Function, ::Type{NP}) where NP<:NamedPolynomial
+function FGb_with(f::Function, ::Type{P}) where P<:Polynomial
     global in_FGb
     assert(!in_FGb)
 
@@ -87,7 +86,7 @@ function FGb_with(f::Function, ::Type{NP}) where NP<:NamedPolynomial
     init(1,1,0,log_file_handle)
 
     reset_coeffs(1)
-    varnames = [String(var) for var in names(NP)]
+    varnames = [String(var) for var in variablesymbols(P)]
 
     reset_expos(length(varnames), 0, varnames)
 
@@ -96,7 +95,7 @@ function FGb_with(f::Function, ::Type{NP}) where NP<:NamedPolynomial
 
     in_FGb = true
     res = try
-        f(p -> convert(FGbPolynomial{NP}, p))
+        f(p -> convert(FGbPolynomial{P}, p))
     finally
         in_FGb = false
         reset_memory()
@@ -113,9 +112,9 @@ function show(io::IO, f::FGbPolynomial{T}) where T
     print(io, ")")
 end
 
-function convert(::Type{FGbPolynomial{T}}, f::T) where T<:NamedPolynomial
-    p = creat_poly(length(terms(f.p)))
-    for (i,t) in enumerate(terms(f.p))
+function convert(::Type{FGbPolynomial{T}}, f::T) where T<:Polynomial
+    p = creat_poly(length(terms(f)))
+    for (i,t) in enumerate(terms(f))
         exp = UInt32[e for e in monomial(t).e]
         set_expos2(p,i-1,exp,length(exp))
         set_coeff_gmp(p,i-1,coefficient(t))
@@ -124,8 +123,8 @@ function convert(::Type{FGbPolynomial{T}}, f::T) where T<:NamedPolynomial
     FGbPolynomial{T}(p)
 end
 
-function convert(::Type{T}, f::FGbPolynomial{T}) where T<:NamedPolynomial
-    n_vars = nfields(names(T))
+function convert(::Type{T}, f::FGbPolynomial{T}) where T<:Polynomial
+    n_vars = length(variablesymbols(T))
     n_terms = nb_terms(f.p)
     exponents = Vector{UInt32}(n_terms * n_vars)
     coeff_ptrs = Vector{Ptr{BigInt}}(n_terms)
