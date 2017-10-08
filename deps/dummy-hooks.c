@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
-void info_Maple(const char* s) {fprintf(stderr,"[FGb info ] %s", s);}
+void info_Maple(const char* s) {fprintf(stderr,"[FGb info ] %s\n", s);}
 
-void FGb_int_error_Maple(const char* s) {fprintf(stderr,"[FGb error] %s", s);}
+void FGb_int_error_Maple(const char* s) {fprintf(stderr,"[FGb error] %s\n", s);}
 
 void FGb_error_Maple(const char* s)
 {
