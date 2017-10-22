@@ -145,4 +145,20 @@ function groebner(F::Vector{T}) where T <: FGbPolynomial
     [T(output_basis[i]) for i=1:n]
 end
 
+import PolynomialRings: groebner_basis, groebner_transformation, Term, TupleMonomial
+import PolynomialRings.Backends.Groebner: Buchberger
+
+struct FGbAlgorithm end
+ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:TupleMonomial,BigInt}},:degrevlex}
+function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
+    FGb_with(eltype(polynomials)) do FGbPolynomial
+        G = map(FGbPolynomial, polynomials)
+        gr = groebner(G)
+        map(g -> convert(eltype(polynomials),g), gr)
+    end
+end
+
+groebner_transformation(::FGbAlgorithm, args...) = groebner_transformation(Buchberger(), args...)
+groebner_basis(::FGbAlgorithm, args...) = groebner_basis(Buchberger(), args...)
+
 end
