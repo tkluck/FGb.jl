@@ -149,12 +149,17 @@ import PolynomialRings: groebner_basis, groebner_transformation, Term, TupleMono
 import PolynomialRings.Backends.Groebner: Buchberger
 
 struct FGbAlgorithm end
-ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:TupleMonomial,BigInt}},:degrevlex}
+
+ApplicableBaserings = Union{BigInt, Rational{BigInt}}
+ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:TupleMonomial,<:ApplicableBaserings}},:degrevlex}
 function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
-    FGb_with(eltype(polynomials)) do FGbPolynomial
-        G = map(FGbPolynomial, polynomials)
+    integral_polynomials = [p for (p, _) in integral_fraction.(polynomials)]
+    P = eltype(polynomials)
+    PP = eltype(integral_polynomials)
+    FGb_with(PP) do FGbPolynomial
+        G = map(FGbPolynomial, integral_polynomials)
         gr = groebner(G)
-        map(g -> convert(eltype(polynomials),g), gr)
+        map(g -> convert(P, convert(PP,g)), gr)
     end
 end
 
