@@ -2,18 +2,20 @@ module FGb
 
 using PolynomialRings
 using PolynomialRings: construct_monomial, variablesymbols
+using PolynomialRings.Monomials: enumeratenz, AbstractMonomial
 using PolynomialRings.Polynomials: terms
 using PolynomialRings.Terms: coefficient, monomial
+using PolynomialRings.NamedPolynomials: NamedPolynomial
 
 include("LibFGb.jl")
 
-struct FGbPolynomial{T<:Polynomial}
+struct FGbPolynomial{T<:Polynomial,N}
     p::Ptr{Void}
 end
 
 in_FGb = false
 
-function FGb_with(f::Function, ::Type{P}) where P<:Polynomial
+function FGb_with(f::Function, ::Type{P}, num_vars::Integer) where P<:Polynomial
     global in_FGb
     assert(!in_FGb)
 
@@ -23,16 +25,16 @@ function FGb_with(f::Function, ::Type{P}) where P<:Polynomial
     init(1,1,0,log_file_handle)
 
     reset_coeffs(1)
-    varnames = [String(var) for var in variablesymbols(P)]
+    varnames = ["xx$n" for n=1:num_vars]
 
-    reset_expos(length(varnames), 0, varnames)
+    reset_expos(num_vars, 0, varnames)
 
     internal_threads(8)
     mod_internal_threads(8)
 
     in_FGb = true
     res = try
-        f(p -> convert(FGbPolynomial{P}, p))
+        f(p -> convert(FGbPolynomial{P, num_vars}, p))
     finally
         in_FGb = false
         reset_memory()
@@ -40,6 +42,8 @@ function FGb_with(f::Function, ::Type{P}) where P<:Polynomial
     end
     res
 end
+
+FGb_with(f::Function, ::Type{P}) where P<:NamedPolynomial = FGb_with(f, P, length(variablesymbols(P)))
 
 import Base: convert, show
 
@@ -49,28 +53,30 @@ function show(io::IO, f::FGbPolynomial{T}) where T
     print(io, ")")
 end
 
-function convert(::Type{FGbPolynomial{T}}, f::T) where T<:Polynomial
+function convert(::Type{FGbPolynomial{T,N}}, f::T) where T<:Polynomial where N
     p = creat_poly(length(terms(f)))
     for (i,t) in enumerate(terms(f))
-        exp = UInt32[e for e in monomial(t).e]
+        exp = zeros(UInt32, N)
+        for (j,e) in enumeratenz(monomial(t))
+            exp[j] = e
+        end
         set_expos2(p,i-1,exp,length(exp))
         set_coeff_gmp(p,i-1,coefficient(t))
     end
     full_sort_poly2(p)
-    FGbPolynomial{T}(p)
+    FGbPolynomial{T,N}(p)
 end
 
-function convert(::Type{T}, f::FGbPolynomial{T}) where T<:Polynomial
-    n_vars = length(variablesymbols(T))
+function convert(::Type{T}, f::FGbPolynomial{T,N}) where T<:Polynomial where N
     n_terms = nb_terms(f.p)
-    exponents = Vector{UInt32}(n_terms * n_vars)
+    exponents = Vector{UInt32}(n_terms * N)
     coeff_ptrs = Vector{Ptr{BigInt}}(n_terms)
 
-    code = export_poly_INT_gmp2(n_vars, n_terms, coeff_ptrs, exponents, f.p)
+    code = export_poly_INT_gmp2(N, n_terms, coeff_ptrs, exponents, f.p)
 
     coefficients = map(unsafe_load, coeff_ptrs)
 
-    sum( c * construct_monomial(T, exponents[(1+k*n_vars):((k+1)*n_vars)]) for (k,c) in zip(0:(n_terms-1), coefficients) )
+    sum( c * construct_monomial(T, exponents[(1+k*N):((k+1)*N)]) for (k,c) in zip(0:(n_terms-1), coefficients) )
 end
 
 function groebner(F::Vector{T}) where T <: FGbPolynomial
@@ -87,13 +93,14 @@ import PolynomialRings.Backends.Groebner: Buchberger
 
 struct FGbAlgorithm end
 
-ApplicableBaserings = Union{BigInt, Rational{BigInt}}
-ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:TupleMonomial,<:ApplicableBaserings}},:degrevlex}
+const ApplicableBaserings = Union{BigInt, Rational{BigInt}}
+const ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial,<:ApplicableBaserings}},:degrevlex}
 function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
     integral_polynomials = [p for (p, _) in integral_fraction.(polynomials)]
     P = eltype(polynomials)
     PP = eltype(integral_polynomials)
-    FGb_with(PP) do FGbPolynomial
+    num_vars = maximum(max_variable_index, integral_polynomials)
+    FGb_with(PP, num_vars) do FGbPolynomial
         G = map(FGbPolynomial, integral_polynomials)
         gr = groebner(G)
         map(g -> convert(P, convert(PP,g)), gr)
