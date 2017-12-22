@@ -14,11 +14,8 @@ using FGb: FGb_with, groebner
         println(map(g->convert(R,g), G))
     end
 
-    c1,c2,c3 = formal_coefficients(R, :c)
-    c1 = @constant_coefficient c1 x y z
-    c2 = @constant_coefficient c2 x y z
-    c3 = @constant_coefficient c3 x y z
-    S = typeof(c1)
+    S = @ring! ℤ[c[]]
+    c1,c2,c3 = c[]
 
     FGb_with(S, 3) do FGbPolynomial
         f = FGbPolynomial(c1*c2)
