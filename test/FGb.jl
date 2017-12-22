@@ -1,6 +1,6 @@
 using Base.Test
 using PolynomialRings
-using FGb
+using FGb: FGb_with, groebner
 
 @testset "FGb" begin
     R = @ring! ℤ[x,y,z]

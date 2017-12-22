@@ -1,7 +1,5 @@
 module FGb
 
-export FGb_with, groebner
-
 using PolynomialRings
 using PolynomialRings: construct_monomial, variablesymbols
 using PolynomialRings.Polynomials: terms
