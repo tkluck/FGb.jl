@@ -26,3 +26,7 @@ using FGb: FGb_with, groebner
         println(map(g->convert(S,g), G))
     end
 end
+
+@testset "Groebner testset" begin
+    include(Pkg.dir("PolynomialRings", "test", "Groebner.jl"))
+end

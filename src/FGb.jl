@@ -110,4 +110,6 @@ end
 groebner_transformation(::FGbAlgorithm, args...) = groebner_transformation(Buchberger(), args...)
 groebner_basis(::FGbAlgorithm, args...) = groebner_basis(Buchberger(), args...)
 
+PolynomialRings.Backends.Groebner.set_default(FGbAlgorithm())
+
 end
