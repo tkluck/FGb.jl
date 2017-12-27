@@ -9,6 +9,23 @@ macro libfgb(symbol)
     end
 end
 
+unsafe_store!(
+    cglobal(@libfgb(FGb_julia_info), Ptr{Void}),
+    cfunction(
+        info∘unsafe_string,
+        Void,
+        (Cstring,)
+    ),
+)
+unsafe_store!(
+    cglobal(@libfgb(FGb_julia_error), Ptr{Void}),
+    cfunction(
+        error∘unsafe_string,
+        Void,
+        (Cstring,)
+    ),
+)
+
 enter_INT() = ccall(@libfgb(FGb_int_enter_INT), Void, ())
 init_urgent(bytes_coeff, bytes_exponent, cargo_cult_drldrl, cargo_cult_100000, cargo_cult_0) = ccall(@libfgb(FGb_int_init_urgent), Void, (UInt32,UInt32,Cstring,UInt32,UInt32), bytes_coeff, bytes_exponent, cargo_cult_drldrl, cargo_cult_100000, cargo_cult_0)
 log_output = Ref{UInt}(0)
