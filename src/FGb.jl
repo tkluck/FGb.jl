@@ -96,6 +96,7 @@ struct FGbAlgorithm end
 const ApplicableBaserings = Union{BigInt, Rational{BigInt}}
 const ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial,<:ApplicableBaserings}},:degrevlex}
 function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
+    length(polynomials) == 0 && return polynomials
     integral_polynomials = [p for (p, _) in integral_fraction.(polynomials)]
     P = eltype(polynomials)
     PP = eltype(integral_polynomials)
