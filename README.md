@@ -11,14 +11,9 @@ A Julia wrapper for Jean-Charles Faugère's famous [`FGb` library](http://www-po
 # Synopsis
 
 ```julia
-R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
-FGb_with(R) do FGbPolynomial
-    f = FGbPolynomial(x^2*y)
-    g = FGbPolynomial(x)
-    G = groebner([f,g])
-
-    println(G)
-    println(map(g->convert(R,g), G))
-end
+using PolynomialRings
+@ring! ℤ[x,y]
+using FGb # will automatically use FGb for subsequent calls to groebner_basis()
+@show groebner_basis([x^5, x^2 + y, x*y + y^2]) # outputs [y + x^2, x*y, y^2]
 ```
 
