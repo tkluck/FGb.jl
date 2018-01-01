@@ -5,7 +5,7 @@ using PolynomialRings: construct_monomial, variablesymbols
 using PolynomialRings.Monomials: enumeratenz, AbstractMonomial
 using PolynomialRings.Polynomials: terms
 using PolynomialRings.Terms: coefficient, monomial
-using PolynomialRings.NamedPolynomials: NamedPolynomial, PolynomialOver
+using PolynomialRings.NamedPolynomials: NamedPolynomial, PolynomialBy
 
 include("LibFGb.jl")
 
@@ -94,7 +94,7 @@ import PolynomialRings: gröbner_basis
 struct FGbAlgorithm <: PolynomialRings.Backends.Gröbner.Backend end
 
 const ApplicableBaserings = Union{BigInt, Rational{BigInt}}
-const ApplicablePolynomial = PolynomialOver{<:ApplicableBaserings,Names,:degrevlex} where Names
+const ApplicablePolynomial = PolynomialBy{:degrevlex,<:ApplicableBaserings}
 
 function gröbner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
     length(polynomials) == 0 && return polynomials
