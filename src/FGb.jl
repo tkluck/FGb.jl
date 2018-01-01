@@ -5,7 +5,7 @@ using PolynomialRings: construct_monomial, variablesymbols
 using PolynomialRings.Monomials: enumeratenz, AbstractMonomial
 using PolynomialRings.Polynomials: terms
 using PolynomialRings.Terms: coefficient, monomial
-using PolynomialRings.NamedPolynomials: NamedPolynomial
+using PolynomialRings.NamedPolynomials: NamedPolynomial, PolynomialOver
 
 include("LibFGb.jl")
 
@@ -88,14 +88,15 @@ function groebner(F::Vector{T}) where T <: FGbPolynomial
     [T(output_basis[i]) for i=1:n]
 end
 
-import PolynomialRings: groebner_basis, groebner_transformation, Term, TupleMonomial
-import PolynomialRings.Backends.Groebner: Buchberger
+import PolynomialRings
+import PolynomialRings: gröbner_basis
 
-struct FGbAlgorithm end
+struct FGbAlgorithm <: PolynomialRings.Backends.Gröbner.Backend end
 
 const ApplicableBaserings = Union{BigInt, Rational{BigInt}}
-const ApplicablePolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial,<:ApplicableBaserings}},:degrevlex}
-function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
+const ApplicablePolynomial = PolynomialOver{<:ApplicableBaserings,Names,:degrevlex} where Names
+
+function gröbner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
     length(polynomials) == 0 && return polynomials
     integral_polynomials = [p for (p, _) in integral_fraction.(polynomials)]
     P = eltype(polynomials)
@@ -108,9 +109,6 @@ function groebner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicableP
     end
 end
 
-groebner_transformation(::FGbAlgorithm, args...) = groebner_transformation(Buchberger(), args...)
-groebner_basis(::FGbAlgorithm, args...) = groebner_basis(Buchberger(), args...)
-
-PolynomialRings.Backends.Groebner.set_default(FGbAlgorithm())
+PolynomialRings.Backends.Gröbner.set_default(FGbAlgorithm())
 
 end
