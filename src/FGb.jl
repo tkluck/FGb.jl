@@ -2,10 +2,10 @@ module FGb
 
 using PolynomialRings
 using PolynomialRings: construct_monomial, variablesymbols
+using PolynomialRings.MonomialOrderings: MonomialOrder
 using PolynomialRings.Monomials: enumeratenz, AbstractMonomial
-using PolynomialRings.Polynomials: terms
+using PolynomialRings.Polynomials: NamedPolynomial, PolynomialOver, terms
 using PolynomialRings.Terms: coefficient, monomial
-using PolynomialRings.NamedPolynomials: NamedPolynomial, PolynomialBy
 
 include("LibFGb.jl")
 
@@ -94,9 +94,9 @@ import PolynomialRings: gröbner_basis
 struct FGbAlgorithm <: PolynomialRings.Backends.Gröbner.Backend end
 
 const ApplicableBaserings = Union{BigInt, Rational{BigInt}}
-const ApplicablePolynomial = PolynomialBy{:degrevlex,<:ApplicableBaserings}
+const ApplicablePolynomial = PolynomialOver{<:ApplicableBaserings}
 
-function gröbner_basis(::FGbAlgorithm, polynomials::AbstractArray{<:ApplicablePolynomial})
+function gröbner_basis(::FGbAlgorithm, ::MonomialOrder{:degrevlex}, polynomials::AbstractArray{<:ApplicablePolynomial})
     length(polynomials) == 0 && return polynomials
     integral_polynomials = [p for (p, _) in integral_fraction.(polynomials)]
     P = eltype(polynomials)
